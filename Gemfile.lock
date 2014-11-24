@@ -1,0 +1,19 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    equivalent-xml (0.3.0)
+      nokogiri (>= 1.4.3)
+    mini_portile (0.5.1)
+    nokogiri (1.6.0)
+      mini_portile (~> 0.5.0)
+    rmagick (2.13.2)
+    rubyzip (1.0.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  equivalent-xml (>= 0.2.9)
+  nokogiri (>= 1.5.2)
+  rmagick (>= 2.12.2)
+  rubyzip (>= 1.0.0)
