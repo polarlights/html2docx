@@ -1,11 +1,10 @@
 GEM
-  remote: https://rubygems.org/
+  remote: http://ruby.taobao.org/
   specs:
-    equivalent-xml (0.3.0)
+    equivalent-xml (0.2.9)
       nokogiri (>= 1.4.3)
-    mini_portile (0.5.1)
-    nokogiri (1.6.0)
-      mini_portile (~> 0.5.0)
+    minitest (5.3.5)
+    nokogiri (1.5.11)
     rmagick (2.13.2)
     rubyzip (1.0.0)
 
@@ -13,7 +12,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  equivalent-xml (>= 0.2.9)
-  nokogiri (>= 1.5.2)
-  rmagick (>= 2.12.2)
-  rubyzip (>= 1.0.0)
+  equivalent-xml (~> 0.2.9)
+  minitest (~> 5.3.5)
+  nokogiri (~> 1.5.2)
+  rmagick (~> 2.13.0)
+  rubyzip (~> 1.0.0)

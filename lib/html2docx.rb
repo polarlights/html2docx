@@ -1,5 +1,7 @@
 require 'word/constants'
 require 'word/word'
 
-module Word
+module Html2Docx
+  module Word
+  end
 end

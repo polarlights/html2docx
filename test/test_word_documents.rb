@@ -1,9 +1,9 @@
-require 'test/unit'
+require 'minitest/autorun'
 require 'date'
 require 'html2docx'
 require 'equivalent-xml'
 
-class WordDocumentsTest < Test::Unit::TestCase
+class WordDocumentsTest < MiniTest::Test
   SIMPLE_TEST_DOC_PATH = File.join(File.dirname(__FILE__), 'content', 'simple_test.docx')
   COMPLEX_TEST_DOC_PATH = File.join(File.dirname(__FILE__), 'content', 'complex_test.docx')
 
@@ -30,7 +30,7 @@ class WordDocumentsTest < Test::Unit::TestCase
     doc.save(filename)
     assert File.file?(filename)
     assert File.stat(filename).size > 0
-    assert !Word::PackageComparer.are_equal?(SIMPLE_TEST_DOC_PATH, filename)
+    assert !Html2Docx::Word::PackageComparer.are_equal?(SIMPLE_TEST_DOC_PATH, filename)
 
     file.delete
   end
@@ -44,22 +44,22 @@ class WordDocumentsTest < Test::Unit::TestCase
     doc.save(filename)
     assert File.file?(filename)
     assert File.stat(filename).size > 0
-    assert Word::PackageComparer.are_equal?(SIMPLE_TEST_DOC_PATH, filename)
+    assert Html2Docx::Word::PackageComparer.are_equal?(SIMPLE_TEST_DOC_PATH, filename)
 
     file.delete
   end
 
   def test_blank_document
-    assert_equal Word::WordDocument.blank_document.plain_text, ""
+    assert_equal Html2Docx::Word::WordDocument.blank_document.plain_text, ""
   end
 
   def test_blank_document_with_base_document
     simple_text = load_simple_doc.plain_text
-    assert_equal simple_text, Word::WordDocument.blank_document(:base_document => SIMPLE_TEST_DOC_PATH).plain_text
+    assert_equal simple_text, Html2Docx::Word::WordDocument.blank_document(:base_document => SIMPLE_TEST_DOC_PATH).plain_text
   end
 
   def test_build_document
-    doc = Word::WordDocument.blank_document
+    doc = Html2Docx::Word::WordDocument.blank_document
     doc.add_heading "Heading"
     doc.add_paragraph "intro"
     doc.add_sub_heading "Sub-heading"
@@ -71,7 +71,7 @@ class WordDocumentsTest < Test::Unit::TestCase
 
   # TODO: Actually test the style of the created heading
   def test_build_document_with_styles
-    doc = Word::WordDocument.blank_document
+    doc = Html2Docx::Word::WordDocument.blank_document
     doc.add_heading "Heading"
     doc.add_paragraph "intro"
     doc.add_sub_heading "Sub-heading"
@@ -83,7 +83,7 @@ class WordDocumentsTest < Test::Unit::TestCase
   end
 
   def test_build_paragraphs_with_styles
-    doc = Word::WordDocument.blank_document
+    doc = Html2Docx::Word::WordDocument.blank_document
     doc.add_paragraph "First paragraph"
     doc.add_paragraph "Second paragraph with a paragraph style", {:style => "Heading3"}
     doc.add_paragraph ["Third paragraph ", "with multiple text runs"]
@@ -91,13 +91,13 @@ class WordDocumentsTest < Test::Unit::TestCase
     doc.add_paragraph [{:content => "Fifth paragraph with ", :style => "NewStyle"}, {:content => "multiple styled runs", :style => "NewStyle2"}]
     doc.add_paragraph [{:content => "Sixth paragraph with ", :style => "NewStyle"}, "mixed runs"]
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'multiple_paragraphs.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'multiple_paragraphs.docx'))
     assert docs_are_equivalent?(doc, target)
   end
 
   def test_from_data
     doc_1 = nil
-    File.open(SIMPLE_TEST_DOC_PATH) { |f| doc_1 = Word::WordDocument.from_data(f.read) }
+    File.open(SIMPLE_TEST_DOC_PATH) { |f| doc_1 = Html2Docx::Word::WordDocument.from_data(f.read) }
     doc_2 = load_simple_doc
     assert_equal doc_1.plain_text, doc_2.plain_text
   end
@@ -107,20 +107,20 @@ class WordDocumentsTest < Test::Unit::TestCase
     assert !data.nil?
     assert data.length > 0
 
-    doc_1 = Word::WordDocument.from_data(data)
+    doc_1 = Html2Docx::Word::WordDocument.from_data(data)
     doc_2 = load_simple_doc
     assert_equal doc_1.plain_text, doc_2.plain_text
   end
 
   def test_complex_parsing
-    doc = Word::WordDocument.new(COMPLEX_TEST_DOC_PATH)
+    doc = Html2Docx::Word::WordDocument.new(COMPLEX_TEST_DOC_PATH)
     assert doc.plain_text.include?("Presiding Peasant: Dennis")
     assert doc.plain_text.include?("Assessment Depot: Swampy Castle (might be sinking)")
     replace_and_check(doc, "Swampy Castle (might be sinking)", "Farcical Aquatic Ceremony")
   end
 
   def test_image_addition
-    doc = Word::WordDocument.blank_document
+    doc = Html2Docx::Word::WordDocument.blank_document
     doc.add_heading "Heading"
     doc.add_paragraph "intro"
     doc.add_sub_heading "Sub-heading"
@@ -138,17 +138,17 @@ class WordDocumentsTest < Test::Unit::TestCase
     filename = file.path
     doc.save(filename)
 
-    doc_copy = Word::WordDocument.new(filename)
+    doc_copy = Html2Docx::Word::WordDocument.new(filename)
     assert_equal doc.plain_text, doc_copy.plain_text
     assert_equal doc_copy.plain_text, "Heading\nintro\nSub-heading\nbody\nSub-heading\n\nSub-heading\n\nSub-heading\n\nend\n"
 
-    assert_not_nil doc_copy.get_part("/word/media/image1.jpeg")
-    assert_not_nil doc_copy.get_part("/word/media/image2.jpeg")
+    assert doc_copy.get_part("/word/media/image1.jpeg")
+    assert doc_copy.get_part("/word/media/image2.jpeg")
     assert_nil doc_copy.get_part("/word/media/image3.jpeg")
   end
 
   def test_image_replacement
-    doc = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'image_replacement_test.docx'))
+    doc = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'image_replacement_test.docx'))
     doc.replace_all("IMAGE", test_image)
 
     file = Tempfile.new('test_image_addition_doc')
@@ -156,61 +156,61 @@ class WordDocumentsTest < Test::Unit::TestCase
     filename = file.path
     doc.save(filename)
 
-    doc_copy = Word::WordDocument.new(filename)
+    doc_copy = Html2Docx::Word::WordDocument.new(filename)
     assert_equal doc_copy.plain_text, "Header\n\n\n\nABC\n\nDEF\n\nABCDEF\n\n"
 
-    assert_not_nil doc_copy.get_part("/word/media/image1.jpeg")
-    assert_not_nil doc_copy.get_part("/word/media/image2.jpeg")
-    assert_not_nil doc_copy.get_part("/word/media/image3.jpeg")
-    assert_not_nil doc_copy.get_part("/word/media/image4.jpeg")
+    assert doc_copy.get_part("/word/media/image1.jpeg")
+    assert doc_copy.get_part("/word/media/image2.jpeg")
+    assert doc_copy.get_part("/word/media/image3.jpeg")
+    assert doc_copy.get_part("/word/media/image4.jpeg")
     assert_nil doc_copy.get_part("/word/media/image5.jpeg")
   end
 
   def test_complex_search_and_replace
-    source = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_replacement_source.docx'))
+    source = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_replacement_source.docx'))
     source.replace_all("{{BLOCK_1}}", ["So much Sow!", test_image, nil, "Hopefully crispy"])
     source.replace_all("{{BLOCK_2}}", ["Boudin", "bacon", "ham", "hock", "meatball", "salami", "andouille"])
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_replacement_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_replacement_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   def test_table_search_and_replace
-    source = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_replacement_source.docx'))
+    source = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_replacement_source.docx'))
     source.replace_all("{{MY_TABLE}}", { :column_1 => ["Alpha", "One", 1], :column_2 => ["Bravo", "Two", 2], "Column 3" => nil, "Column 4" => [], :column_5 => "Echo"})
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_replacement_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_replacement_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   def test_image_within_table_search_and_replace
-    source = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'image_within_table_replacement_source.docx'))
+    source = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'image_within_table_replacement_source.docx'))
     source.replace_all("{{MY_TABLE}}", { :column_1 => ["Alpha", "One", 1], :column_2 => ["Bravo", test_image, 2], "Column 3" => ["Charlie", nil, 3]})
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'image_within_table_replacement_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'image_within_table_replacement_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   def test_table_within_table_search_and_replace
-    source = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_within_table_replacement_source.docx'))
+    source = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_within_table_replacement_source.docx'))
     inner_table = { :one => ["1", "one"], :two => [ "2", "two"], :create_table => true}
     source.replace_all("{{MY_TABLE}}", { :column_1 => ["Alpha", "One"], :column_2 => ["Bravo", inner_table, 2], "Column 3" => ["Charlie"]})
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_within_table_replacement_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'table_within_table_replacement_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   # NOTE: Behavior here has changed. I don't really care at the moment.
   # def test_complex_within_table_search_and_replace
-  #   source = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_within_table_replacement_source.docx'))
+  #   source = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_within_table_replacement_source.docx'))
   #   source.replace_all("{{MY_TABLE}}", { :column_1 => "Alpha", :column_2 => [["pre", test_image]], "Column 3" => [["Charlie", "post"]], :create_table => true})
 
-  #   target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_within_table_replacement_target.docx'))
+  #   target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'complex_within_table_replacement_target.docx'))
   #   assert docs_are_equivalent?(source, target)
   # end
 
   def test_adding_tables
-    source = Word::WordDocument.blank_document
+    source = Html2Docx::Word::WordDocument.blank_document
     source.add_heading "Heading"
     source.add_paragraph "intro"
     source.add_sub_heading "Sub-heading"
@@ -221,12 +221,12 @@ class WordDocumentsTest < Test::Unit::TestCase
     source.replace_all("{{PLACEHOLDER_1}}", "Delta Echo Foxtrot Golf")
     source.replace_all("{{PLACEHOLDER_2}}", "Hotel India Juliet Kilo")
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_tables_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_tables_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   def test_adding_tables_with_style
-    source = Word::WordDocument.blank_document
+    source = Html2Docx::Word::WordDocument.blank_document
     source.add_heading "Heading"
     source.add_paragraph "intro"
     source.add_sub_heading "Sub-heading"
@@ -237,12 +237,12 @@ class WordDocumentsTest < Test::Unit::TestCase
     source.replace_all("{{PLACEHOLDER_1}}", "Delta Echo Foxtrot Golf")
     source.replace_all("{{PLACEHOLDER_2}}", "Hotel India Juliet Kilo")
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_tables_with_style_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_tables_with_style_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   def test_adding_table_with_character_styles
-    source = Word::WordDocument.blank_document
+    source = Html2Docx::Word::WordDocument.blank_document
     source.add_table({ :column_1 => ["Alpha", "One"],
       :column_2 => [["Multiple ", "runs"], ["in each ", "cell"]],
       :column_3 => [{:content => "Styled", :style => "NewStyle"}, {:content => "Styled", :style => "NewStyle"}],
@@ -250,38 +250,38 @@ class WordDocumentsTest < Test::Unit::TestCase
         [{:content => "Styled ", :style => "NewStyle"}, {:content => "runs ", :style => "NewStyle2"}]]},
       :table_style => 'DarkList')
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_table_with_character_styles_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_table_with_character_styles_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   def test_adding_table_with_special_first_last_columns
-    source = Word::WordDocument.blank_document
+    source = Html2Docx::Word::WordDocument.blank_document
     table = {
       'A' => [1, 2, 3],
       'B' => [4, 5, 6],
       'C' => [7, 8, 9]
     }
-    properties = Word::TableProperties.new('LightGrid', nil, nil, {:first_column => true, :last_column => true})
+    properties = Html2Docx::Word::TableProperties.new('LightGrid', nil, nil, {:first_column => true, :last_column => true})
     source.add_table(table, :table_properties => properties)
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_table_with_special_first_last_columns_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_table_with_special_first_last_columns_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   def test_adding_page_break
-    source = Word::WordDocument.blank_document
+    source = Html2Docx::Word::WordDocument.blank_document
     source.add_paragraph("First Paragraph")
     source.add_page_break()
     source.add_paragraph("Second Paragraph")
 
-    target = Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_page_break_target.docx'))
+    target = Html2Docx::Word::WordDocument.new(File.join(File.dirname(__FILE__), 'content', 'add_page_break_target.docx'))
     assert docs_are_equivalent?(source, target)
   end
 
   private
 
   def load_simple_doc
-    Word::WordDocument.new(SIMPLE_TEST_DOC_PATH)
+    Html2Docx::Word::WordDocument.new(SIMPLE_TEST_DOC_PATH)
   end
 
   def replace_and_check(doc, source, replacement)
@@ -292,7 +292,7 @@ class WordDocumentsTest < Test::Unit::TestCase
 
   def stress_test_replace(doc_path)
     1000.times do
-      doc = Word::WordDocument.new(doc_path)
+      doc = Html2Docx::Word::WordDocument.new(doc_path)
       replace_and_check(doc, random_substring(doc.plain_text), random_text)
     end
   end

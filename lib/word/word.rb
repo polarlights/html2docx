@@ -9,5 +9,7 @@ require 'word/run'
 require 'word/table_properties'
 require 'word/text_range'
 
-module Word
+module Html2Docx
+  module Word
+  end
 end
